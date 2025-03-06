@@ -1,0 +1,12 @@
+env: "prod"
+http_server:
+  port: ":8090"
+  reader_header_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 60s
+db:
+  host: "url-short-db"
+  port: "5432"
+  username: "postgres"
+  db_name: "url-short"
+  ssl_mode: "disable"
