@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	mock_handlers "url-shortener/app/handlers/mocks"
+	"url-shortener/app/repository"
 )
 
 func TestHandler_Redirect(t *testing.T) {
@@ -39,6 +40,14 @@ func TestHandler_Redirect(t *testing.T) {
 			mockBehavior: func(m *mock_handlers.MockGetURL) {},
 			expectedCode: http.StatusNotFound,
 		},
+		{
+			name:    "URL Not Found",
+			urlPath: "/non-existent",
+			mockBehavior: func(m *mock_handlers.MockGetURL) {
+				m.EXPECT().GetURL("non-existent").Return("", repository.ErrNotFound)
+			},
+			expectedCode: http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
@@ -49,23 +58,19 @@ func TestHandler_Redirect(t *testing.T) {
 			m := mock_handlers.NewMockGetURL(ctrl)
 			tt.mockBehavior(m)
 
-			// Настройка роутера Chi
 			r := chi.NewRouter()
 			r.Get("/{alias}", Redirect(log, m))
 
 			req := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
 			w := httptest.NewRecorder()
 
-			// Выполнение запроса
 			r.ServeHTTP(w, req)
 
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			// Проверка статус кода
 			assert.Equal(t, tt.expectedCode, resp.StatusCode)
 
-			// Проверка Location для успешного редиректа
 			if tt.expectedURL != "" {
 				location := resp.Header.Get("Location")
 				assert.Equal(t, tt.expectedURL, location)
