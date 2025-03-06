@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:13
+    container_name: url-short-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: url-short
+    ports:
+      - "5438:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - my-shared-network
+
+  app:
+    build: .
+    container_name: url-short-app
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    depends_on:
+      - db
+    networks:
+      - my-shared-network
+
+  migrate:
+    image: migrate/migrate
+    container_name: url-short-migrate
+    command: -path /app/migrations -database "postgres://postgres:${DB_PASSWORD}@db:5432/url-short?sslmode=disable" up
+    volumes:
+      - ./migrations:/app/migrations
+    depends_on:
+      - db
+    networks:
+      - my-shared-network
+
+volumes:
+  db_data:
+
+networks:
+  my-shared-network:
