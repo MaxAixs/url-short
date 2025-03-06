@@ -13,8 +13,10 @@ import (
 
 type ReqURL struct {
 	URL   string `json:"url" validate:"required,url"`
-	Alias string `json:"short_url"`
+	Alias string `json:"alias"`
 }
+
+//go:generate mockgen -source=saveurl.go -destination=mocks/mockSaveUrl.go
 
 type URLSaver interface {
 	SaveURL(URL string, shortURL string) (int, error)

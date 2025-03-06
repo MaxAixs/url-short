@@ -29,7 +29,7 @@ func Redirect(log *slog.Logger, getURL GetURL) http.HandlerFunc {
 		url, err := getURL.GetURL(alias)
 		if errors.Is(err, repository.ErrNotFound) {
 
-			log.Info("URL not found", alias)
+			log.Info("URL not found", "alias", alias)
 
 			render.JSON(w, r, ErrorResp("URL not found"))
 

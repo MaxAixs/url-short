@@ -18,7 +18,7 @@ type Response struct {
 
 type OKResponse struct {
 	Response
-	Alias string `json:"alias ,omitempty"`
+	Alias string `json:"alias,omitempty"`
 }
 
 func OK() Response {
