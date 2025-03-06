@@ -10,6 +10,8 @@ import (
 	"url-shortener/pkg/logger"
 )
 
+//go:generate mockgen -source=redirect.go -destination=mocks/mockRedirect.go
+
 type GetURL interface {
 	GetURL(shortUrl string) (string, error)
 }
