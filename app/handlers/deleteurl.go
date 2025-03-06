@@ -9,11 +9,13 @@ import (
 	"url-shortener/app/repository"
 )
 
+//go:generate mockgen -source=deleteUrl.go -destination=mocks/mockDeleteUrl.go
+
 type URLDeleter interface {
 	DeleteURL(shortUrl string) error
 }
 
-func DeleteURL(log *slog.Logger, URLDelete URLDeleter) http.HandlerFunc {
+func DeleteURL(slog *slog.Logger, URLDelete URLDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		alias := chi.URLParam(r, "alias")
 		if aliasIsEmpty(alias) {
