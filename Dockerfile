@@ -3,6 +3,7 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
+
 RUN go mod download
 
 COPY . .
@@ -20,3 +21,7 @@ COPY --from=builder /app/internal/config /root/internal/config
 ENV DB_PASSWORD=${DB_PASSWORD}
 
 CMD ["/root/url-short"]
+
+RUN apk add --no-cache go
+
+CMD ["go", "test", "./..."]

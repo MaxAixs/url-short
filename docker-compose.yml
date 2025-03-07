@@ -23,10 +23,12 @@ services:
       - .env
     environment:
       DB_HOST: db
+      DB_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - db
     networks:
       - my-shared-network
+    command: ["./url-short"]
 
   migrate:
     image: migrate/migrate
@@ -38,6 +40,20 @@ services:
       - db
     networks:
       - my-shared-network
+
+  test:
+    build: .
+    container_name: url-short-test
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - my-shared-network
+    command: ["go", "test", "./..."]
 
 volumes:
   db_data:
