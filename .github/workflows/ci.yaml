@@ -9,28 +9,55 @@ on:
 env:
   IMAGE_NAME: aixs/url-short
   SERVICE_NAME: app
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create env file
         run: |
-          docker build \
-            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -t $IMAGE_NAME:latest .
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
 
       - name: Run docker containers with Docker Compose
-        run: docker-compose up -d
+        run: |
+          docker-compose up -d
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
 
       - name: Run tests
         run: docker-compose run --rm $SERVICE_NAME go test ./...
 
       - name: Stop containers
         run: docker-compose down
+        if: always()
+
+      - name: Save Docker image
+        if: github.ref == 'refs/heads/main'
+        run: docker save ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} > image.tar
+
+      - name: Upload Docker image as artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image
+          path: image.tar
+          retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
@@ -38,15 +65,38 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: .
+
+      - name: Load Docker image
+        run: docker load < image.tar
 
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Tag and push Docker image
         run: |
-          docker build \
-            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -t $IMAGE_NAME:latest .
-          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$(date +%Y%m%d%H%M%S)
-          docker push $IMAGE_NAME:latest
+          DATE_TAG=$(date +%Y%m%d%H%M%S)
+          
+      
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_NAME }}:latest
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_NAME }}:$DATE_TAG
+  
+          docker push ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:$DATE_TAG
+
+
+      - name: Deploy to production
+        run: |
+          # Пример команды развертывания (замените на вашу собственную)
+          echo "Deploying to production server..."
+          # Например, SSH на сервер и запуск docker-compose pull и up
+          # ssh user@your-server "cd /path/to/app && docker-compose pull && docker-compose up -d
