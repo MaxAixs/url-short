@@ -38,7 +38,7 @@ jobs:
           docker-compose up -d
 
       - name: Run tests
-        run: docker-compose run --rm $SERVICE_NAME go test ./...
+        run: docker-compose run --rm $SERVICE_NAME=test go test ./...
 
       - name: Stop containers
         run: docker-compose down
