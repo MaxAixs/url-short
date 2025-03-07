@@ -17,6 +17,6 @@ COPY --from=builder /app/url-short .
 
 COPY --from=builder /app/internal/config /root/internal/config
 
-COPY .env .
+ENV DB_PASSWORD=${DB_PASSWORD}
 
 CMD ["/root/url-short"]
