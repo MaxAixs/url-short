@@ -54,6 +54,7 @@ services:
     networks:
       - my-shared-network
     command: ["go", "test", "./..."]
+    working_dir: /app
 
 volumes:
   db_data:
