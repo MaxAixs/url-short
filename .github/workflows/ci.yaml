@@ -17,6 +17,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+          curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
       - name: Build Docker image
         run: |
           docker build -t ${{ env.IMAGE_NAME }}:test .
@@ -54,9 +62,6 @@ jobs:
       - name: Tag and push Docker image
         run: |
           DATE_TAG=$(date +%Y%m%d%H%M%S)
-  
           docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:$DATE_TAG
-          
-
           docker push ${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.IMAGE_NAME }}:$DATE_TAG }}:$DATE_TAG
+          docker push ${{ env.IMAGE_NAME }}:$DATE_TAG
