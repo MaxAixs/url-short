@@ -42,7 +42,9 @@ services:
       - my-shared-network
 
   test:
-    build: .
+    build:
+      context: .
+      target: tester
     container_name: url-short-test
     env_file:
       - .env
@@ -55,6 +57,7 @@ services:
       - my-shared-network
     command: ["go", "test", "./..."]
     working_dir: /app
+
 
 volumes:
   db_data:
