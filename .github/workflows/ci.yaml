@@ -1,4 +1,4 @@
-name: Deploy App
+name: Build, Test and Push to Docker Hub
 
 on:
   push:
@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v3
         with:
           context: .
           load: true
@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload Docker image as artifact
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: docker-image
           path: image.tar
@@ -64,11 +64,8 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Download Docker image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v2
         with:
           name: docker-image
           path: .
@@ -86,17 +83,8 @@ jobs:
         run: |
           DATE_TAG=$(date +%Y%m%d%H%M%S)
           
-      
           docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_NAME }}:latest
           docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_NAME }}:$DATE_TAG
-  
+
           docker push ${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.IMAGE_NAME }}:$DATE_TAG
-
-
-      - name: Deploy to production
-        run: |
-          # Пример команды развертывания (замените на вашу собственную)
-          echo "Deploying to production server..."
-          # Например, SSH на сервер и запуск docker-compose pull и up
-          # ssh user@your-server "cd /path/to/app && docker-compose pull && docker-compose up -d
